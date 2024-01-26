@@ -4,13 +4,56 @@ import { ObjectId } from 'mongodb';
 
 const router = express.Router();
 
+
+//schema validator
+    //validation rules
+    //each doc much have class-Id between 0 and 300
+    //each doc must have a learner id wiht int greater than or equal to 0
+    
+async () => {
+    await db.createCollection("grades", {
+        validator: {
+            $jsonSchema: {
+                bsonType: 'object',
+                title: "Grades Validation",
+
+                required:["_id", "scores", "class_id", "learner_id"],
+
+                properties:{
+                    _id:{
+                        bsonType: "ObjectID",
+                        description: "_id is required as an Object ID"
+                    },
+                scores:{
+                    bsonType: ["object"],
+                    decription: "scores must be an array of objects"
+                },
+                class_id:{
+                    bsonType: "int",
+                    minimum:0,
+                    maximum:300,
+                    description:"class_id must be an integer between 0 and 300"
+
+                },
+                learner_id:{
+                    bsonType:"int",
+                    mininum: 0,
+                    description
+                }
+            }
+        }
+    }})
+}
+
+
+
+
 // Query collection middleware
 router.use(async (req, res, next) => {
     req.grades = await db.collection('grades');
     const firstindex = db.collection('grades').createIndex({class_id: 1});
     const secondIndex = db.collection('grades').createIndex({learner_id: 1});
     const compoundIndex = db.collection('grades').createIndex({learner_id: 1},{class_id:1} );
-
 
     next();
 });
@@ -19,6 +62,9 @@ router.use(async (req, res, next) => {
 // localhost:5050/grades/
 
 //creatoing a single field index
+
+
+
 
 
 
