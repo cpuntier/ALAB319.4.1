@@ -7,11 +7,18 @@ const router = express.Router();
 // Query collection middleware
 router.use(async (req, res, next) => {
     req.grades = await db.collection('grades');
+    const firstindex = db.collection('grades').createIndex({class_id: 1});
+    const secondIndex = db.collection('grades').createIndex({learner_id: 1});
+    const compoundIndex = db.collection('grades').createIndex({learner_id: 1},{class_id:1} );
+
+
     next();
 });
 
 //BASE URL
 // localhost:5050/grades/
+
+//creatoing a single field index
 
 
 
