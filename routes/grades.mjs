@@ -13,6 +13,50 @@ router.use(async (req, res, next) => {
 //BASE URL
 // localhost:5050/grades/
 
+
+
+//adding get router /grades/stats/:id
+//mimics above agregations but only for learners within a clas that has a class_id equal to :id
+router.get('/stats/:id', async (req, res) => {
+    let collection = req.grades;
+    let classId = await collection.aggregate(
+        [
+            {
+                $match: {
+                    class_id: Number(req.params.id)
+                }
+            },
+            {
+                $group: { _id: null, uniqueValues: { $addToSet: "$learner_id" } }
+            }, { $sort: { uniqueValues: 1, _id: 1 } }
+        ]).toArray();
+    let totalLearners = classId[0].uniqueValues.length;
+
+
+    let passed = await collection.aggregate([
+        {
+            $set: {
+                avg: { $avg: "$scores.score" }
+            }
+        }, {
+            $match: {
+                avg: {
+                    $gt: 70
+                }
+            }
+        }, {
+            $group: { _id: null, uniqueValues: { $addToSet: "$learner_id" } }
+        }, { $sort: { uniqueValues: 1, _id: 1 } }
+
+    ]).toArray();
+    
+    const passedLearners = passed[0].uniqueValues.length;
+
+    res.send(`STATS for class ${req.params.id} <br> Total Learners : ${totalLearners} <br> Learners that Passed: ${passedLearners} <br> Pass Ratio ${passedLearners / totalLearners} `);
+
+})
+
+
 // //Create a get route at /grades/stats
 router.get('/stats', async (req, res) => {
     let collection = req.grades;
@@ -45,18 +89,22 @@ router.get('/stats', async (req, res) => {
             $sort: {
                 learner_id: 1
             }
-        },{$group: {
-            _id : null, uniqueValues: {$addToSet: "$learner_id"}
+        }, {
+            $group: {
+                _id: null, uniqueValues: { $addToSet: "$learner_id" }
+            }
         }
-    }
 
     ]).toArray();
     const passedLearner = result[0].uniqueValues.length;
     console.log(passedLearner);
 
 
-    res.send(`STATS <br> Total Learners : ${totalLearners} <br> Learners that Passed: ${passedLearner} <br> Pass Ratio ${passedLearner/totalLearners} `);
+    res.send(`STATS <br> Total Learners : ${totalLearners} <br> Learners that Passed: ${passedLearner} <br> Pass Ratio ${passedLearner / totalLearners} `);
 })
+
+
+
 
 
 /*    "/grades" routes    */
